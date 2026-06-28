@@ -1,7 +1,12 @@
 const express = require("express");
+
 const {
   createUser,
 } = require("../controllers/user.controller");
+
+const verifyJWT = require(
+  "../middlewares/verifyJWT"
+);
 
 const router = express.Router();
 
@@ -13,5 +18,16 @@ router.get("/", (req, res) => {
     message: "Users route working ✅",
   });
 });
+
+router.get(
+  "/me",
+  verifyJWT,
+  (req, res) => {
+    res.json({
+      success: true,
+      user: req.decoded,
+    });
+  }
+);
 
 module.exports = router;
