@@ -1,5 +1,6 @@
 const COLLECTIONS = require("../constants/collections");
 const { client } = require("../config/db");
+const { ObjectId } = require("mongodb");
 
 const createAppointment = async (req, res) => {
   try {
@@ -55,8 +56,67 @@ const getMyAppointments = async (req, res) => {
     });
   }
 };
+const cancelAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const db = client.db("medicare-connect");
+
+    const result = await db
+      .collection(COLLECTIONS.APPOINTMENTS)
+      .updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            status: "cancelled",
+          },
+        }
+      );
+
+    res.json({
+      success: true,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const confirmPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const db = client.db("medicare-connect");
+
+    const result = await db
+      .collection(COLLECTIONS.APPOINTMENTS)
+      .updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            paymentStatus: "paid",
+            status: "confirmed",
+            paidAt: new Date(),
+          },
+        }
+      );
+
+    res.json({
+      success: true,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   createAppointment,
   getMyAppointments,
+  cancelAppointment,
+  confirmPayment,
 };
