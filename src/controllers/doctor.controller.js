@@ -67,8 +67,82 @@ const getDoctorById = async (req, res) => {
     });
   }
 };
+const getAllDoctors = async (req, res) => {
+  try {
+    const db = client.db("medicare-connect");
+
+    const doctors = await db
+      .collection(COLLECTIONS.DOCTORS)
+      .find()
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      doctors,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const addDoctor = async (req, res) => {
+  try {
+    const doctor = req.body;
+
+    const db = client.db("medicare-connect");
+
+    const result = await db
+      .collection(COLLECTIONS.DOCTORS)
+      .insertOne({
+        ...doctor,
+        createdAt: new Date(),
+      });
+
+    res.status(201).json({
+      success: true,
+      insertedId: result.insertedId,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const deleteDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const db = client.db("medicare-connect");
+
+    const result = await db
+      .collection(COLLECTIONS.DOCTORS)
+      .deleteOne({
+        _id: new ObjectId(id),
+      });
+
+    res.status(200).json({
+      success: true,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 module.exports = {
   getDoctors,
   getDoctorById,
+  getAllDoctors,
+  addDoctor,
+  deleteDoctor,
 };

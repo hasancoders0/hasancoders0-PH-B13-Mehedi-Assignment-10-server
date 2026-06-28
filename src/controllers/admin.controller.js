@@ -1,3 +1,5 @@
+const { ObjectId } = require("mongodb");
+
 const COLLECTIONS = require("../constants/collections");
 const { client } = require("../config/db");
 
@@ -5,32 +7,91 @@ const getDashboardStats = async (req, res) => {
   try {
     const db = client.db("medicare-connect");
 
-    const totalUsers = await db
-      .collection(COLLECTIONS.USERS)
-      .countDocuments();
+    const usersCollection = db.collection(COLLECTIONS.USERS);
+    const doctorsCollection = db.collection(COLLECTIONS.DOCTORS);
+    const appointmentsCollection = db.collection(COLLECTIONS.APPOINTMENTS);
 
-    const totalDoctors = await db
-      .collection(COLLECTIONS.DOCTORS)
-      .countDocuments();
+    const totalUsers = await usersCollection.countDocuments();
 
-    const totalAppointments = await db
-      .collection(COLLECTIONS.APPOINTMENTS)
-      .countDocuments();
+    const totalDoctors = await doctorsCollection.countDocuments();
 
-    const totalPayments = await db
-      .collection(COLLECTIONS.APPOINTMENTS)
-      .countDocuments({
-        paymentStatus: "paid",
+    const totalAppointments = await appointmentsCollection.countDocuments();
+
+    const totalPaidAppointments = await appointmentsCollection.countDocuments({
+      paymentStatus: "paid",
+    });
+
+    const totalPendingAppointments =
+      await appointmentsCollection.countDocuments({
+        status: "pending",
       });
 
-    res.json({
+    const totalCancelledAppointments =
+      await appointmentsCollection.countDocuments({
+        status: "cancelled",
+      });
+
+    res.status(200).json({
       success: true,
       stats: {
         totalUsers,
         totalDoctors,
         totalAppointments,
-        totalPayments,
+        totalPaidAppointments,
+        totalPendingAppointments,
+        totalCancelledAppointments,
       },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const db = client.db("medicare-connect");
+
+    const users = await db
+      .collection(COLLECTIONS.USERS)
+      .find()
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const makeAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const db = client.db("medicare-connect");
+
+    const result = await db.collection(COLLECTIONS.USERS).updateOne(
+      {
+        _id: new ObjectId(id),
+      },
+      {
+        $set: {
+          role: "admin",
+        },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+      modifiedCount: result.modifiedCount,
     });
   } catch (error) {
     res.status(500).json({
@@ -42,4 +103,6 @@ const getDashboardStats = async (req, res) => {
 
 module.exports = {
   getDashboardStats,
+  getAllUsers,
+  makeAdmin,
 };
