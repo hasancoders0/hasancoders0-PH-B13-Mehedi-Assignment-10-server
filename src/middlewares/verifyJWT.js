@@ -12,22 +12,19 @@ const verifyJWT = (req, res, next) => {
 
   const token = authorization.split(" ")[1];
 
-  jwt.verify(
-    token,
-    process.env.JWT_SECRET,
-    (error, decoded) => {
-      if (error) {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid token",
-        });
-      }
+  jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
+    if (error) {
+      console.log(error);
 
-      req.decoded = decoded;
-
-      next();
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
     }
-  );
+
+    req.decoded = decoded;
+    next();
+  });
 };
 
 module.exports = verifyJWT;

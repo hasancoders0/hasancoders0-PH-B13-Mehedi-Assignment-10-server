@@ -3,8 +3,6 @@ const { client } = require("../config/db");
 
 const createUser = async (req, res) => {
   try {
-    console.log("REQ BODY:", req.body);
-
     const user = req.body;
 
     if (!user) {
@@ -56,6 +54,38 @@ const createUser = async (req, res) => {
   }
 };
 
+const getUserByEmail = async (req, res) => {
+  try {
+    const email = req.params.email;
+
+    const db = client.db("medicare-connect");
+
+    const usersCollection = db.collection(COLLECTIONS.USERS);
+
+    const user = await usersCollection.findOne({
+      email,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createUser,
+  getUserByEmail,
 };

@@ -2,11 +2,10 @@ const express = require("express");
 
 const {
   createUser,
+  getUserByEmail,
 } = require("../controllers/user.controller");
 
-const verifyJWT = require(
-  "../middlewares/verifyJWT"
-);
+const verifyJWT = require("../middlewares/verifyJWT");
 
 const router = express.Router();
 
@@ -19,15 +18,13 @@ router.get("/", (req, res) => {
   });
 });
 
-router.get(
-  "/me",
-  verifyJWT,
-  (req, res) => {
-    res.json({
-      success: true,
-      user: req.decoded,
-    });
-  }
-);
+router.get("/me", verifyJWT, (req, res) => {
+  res.json({
+    success: true,
+    user: req.decoded,
+  });
+});
+
+router.get("/:email", verifyJWT, getUserByEmail);
 
 module.exports = router;
