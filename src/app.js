@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 
 const seedRoutes = require("./routes/seed.routes");
+const userRoutes = require("./routes/user.routes");
+const authRoutes = require("./routes/auth.routes");
+
 
 const app = express();
 
@@ -11,6 +14,8 @@ app.use(express.json());
 
 // Routes
 app.use("/api/seed", seedRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
 
 // Health Check Route
 app.get("/", (req, res) => {
