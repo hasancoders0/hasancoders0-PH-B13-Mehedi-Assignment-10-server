@@ -9,6 +9,7 @@ const appointmentRoutes = require("./routes/appointment.routes");
 const paymentRoutes = require("./routes/payment.routes");
 const adminRoutes = require("./routes/admin.routes");
 const prescriptionRoutes = require("./routes/prescription.routes");
+const reviewRoutes = require("./routes/review.routes");
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Health Check Route
 app.get("/", (req, res) => {

@@ -12,6 +12,7 @@ const createAppointment = async (req, res) => {
       ...appointment,
       status: "pending",
       paymentStatus: "unpaid",
+      hasReview: false,
       createdAt: new Date(),
     });
 
