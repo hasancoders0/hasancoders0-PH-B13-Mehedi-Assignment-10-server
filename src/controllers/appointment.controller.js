@@ -114,9 +114,42 @@ const confirmPayment = async (req, res) => {
     });
   }
 };
+
+const getAppointmentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const db = client.db("medicare-connect");
+
+    const appointment = await db
+      .collection(COLLECTIONS.APPOINTMENTS)
+      .findOne({
+        _id: new ObjectId(id),
+      });
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      appointment,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createAppointment,
   getMyAppointments,
   cancelAppointment,
   confirmPayment,
+  getAppointmentById,
 };
