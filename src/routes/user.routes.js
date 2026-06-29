@@ -3,6 +3,7 @@ const express = require("express");
 const {
   createUser,
   getUserByEmail,
+  updateUserProfile,
 } = require("../controllers/user.controller");
 
 const verifyJWT = require("../middlewares/verifyJWT");
@@ -26,5 +27,6 @@ router.get("/me", verifyJWT, (req, res) => {
 });
 
 router.get("/:email", verifyJWT, getUserByEmail);
+router.patch("/:id", verifyJWT, updateUserProfile);
 
 module.exports = router;

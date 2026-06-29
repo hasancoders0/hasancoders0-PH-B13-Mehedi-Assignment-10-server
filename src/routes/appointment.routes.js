@@ -4,10 +4,12 @@ const {
   createAppointment,
   getMyAppointments,
   getDoctorAppointments,
+  getAppointmentById,
   cancelAppointment,
   confirmPayment,
-  getAppointmentById,
   updateAppointmentStatus,
+  getAllAppointments,
+  rescheduleAppointment,
 } = require("../controllers/appointment.controller");
 
 const router = express.Router();
@@ -22,8 +24,12 @@ router.patch("/:id/cancel", cancelAppointment);
 
 router.patch("/:id/pay", confirmPayment);
 
+router.get("/admin/all", getAllAppointments);
+
 router.get("/:id", getAppointmentById);
 
 router.patch("/:id/status", updateAppointmentStatus);
+
+router.patch("/:id/reschedule", rescheduleAppointment);
 
 module.exports = router;

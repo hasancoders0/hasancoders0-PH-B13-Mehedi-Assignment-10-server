@@ -84,8 +84,45 @@ const getUserByEmail = async (req, res) => {
     });
   }
 };
+const { ObjectId } = require("mongodb");
 
+const updateUserProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { displayName, photoURL, phone, gender, address } = req.body;
+
+    const db = client.db("medicare-connect");
+
+    const result = await db.collection(COLLECTIONS.USERS).updateOne(
+      {
+        _id: new ObjectId(id),
+      },
+      {
+        $set: {
+          displayName,
+          photoURL,
+          phone,
+          gender,
+          address,
+          updatedAt: new Date(),
+        },
+      },
+    );
+
+    res.json({
+      success: true,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   createUser,
   getUserByEmail,
+  updateUserProfile,
 };

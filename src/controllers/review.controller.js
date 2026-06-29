@@ -21,43 +21,68 @@ const createReview = async (req, res) => {
       comment: req.body.comment,
 
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    const existingReview = await db
-      .collection(COLLECTIONS.REVIEWS)
-      .findOne({
-        appointmentId: review.appointmentId,
-      });
+    const existingReview = await db.collection(COLLECTIONS.REVIEWS).findOne({
+      appointmentId: review.appointmentId,
+    });
 
     if (existingReview) {
       return res.status(400).json({
         success: false,
-        message:
-          "Review already submitted for this appointment.",
+        message: "Review already submitted for this appointment.",
       });
     }
 
-    const result = await db
-      .collection(COLLECTIONS.REVIEWS)
-      .insertOne(review);
+    const result = await db.collection(COLLECTIONS.REVIEWS).insertOne(review);
 
-    await db
-      .collection(COLLECTIONS.APPOINTMENTS)
-      .updateOne(
-        {
-          _id: new ObjectId(review.appointmentId),
+    await db.collection(COLLECTIONS.APPOINTMENTS).updateOne(
+      {
+        _id: new ObjectId(review.appointmentId),
+      },
+      {
+        $set: {
+          hasReview: true,
+          reviewId: result.insertedId.toString(),
+          reviewCreatedAt: new Date(),
         },
-        {
-          $set: {
-            hasReview: true,
-            reviewCreatedAt: new Date(),
-          },
-        }
-      );
+      },
+    );
 
     res.status(201).json({
       success: true,
       insertedId: result.insertedId,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get Review By Appointment
+const getReviewByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    const db = client.db("medicare-connect");
+
+    const review = await db.collection(COLLECTIONS.REVIEWS).findOne({
+      appointmentId,
+    });
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      review,
     });
   } catch (error) {
     res.status(500).json({
@@ -91,12 +116,9 @@ const getDoctorReviews = async (req, res) => {
         ? 0
         : Number(
             (
-              reviews.reduce(
-                (sum, review) =>
-                  sum + Number(review.rating),
-                0
-              ) / totalReviews
-            ).toFixed(1)
+              reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
+              totalReviews
+            ).toFixed(1),
           );
 
     res.json({
@@ -151,20 +173,18 @@ const updateReview = async (req, res) => {
 
     const db = client.db("medicare-connect");
 
-    const result = await db
-      .collection(COLLECTIONS.REVIEWS)
-      .updateOne(
-        {
-          _id: new ObjectId(id),
+    const result = await db.collection(COLLECTIONS.REVIEWS).updateOne(
+      {
+        _id: new ObjectId(id),
+      },
+      {
+        $set: {
+          rating: Number(rating),
+          comment,
+          updatedAt: new Date(),
         },
-        {
-          $set: {
-            rating: Number(rating),
-            comment,
-            updatedAt: new Date(),
-          },
-        }
-      );
+      },
+    );
 
     res.json({
       success: true,
@@ -185,11 +205,9 @@ const deleteReview = async (req, res) => {
 
     const db = client.db("medicare-connect");
 
-    const review = await db
-      .collection(COLLECTIONS.REVIEWS)
-      .findOne({
-        _id: new ObjectId(id),
-      });
+    const review = await db.collection(COLLECTIONS.REVIEWS).findOne({
+      _id: new ObjectId(id),
+    });
 
     if (!review) {
       return res.status(404).json({
@@ -198,24 +216,22 @@ const deleteReview = async (req, res) => {
       });
     }
 
-    await db
-      .collection(COLLECTIONS.REVIEWS)
-      .deleteOne({
-        _id: new ObjectId(id),
-      });
+    await db.collection(COLLECTIONS.REVIEWS).deleteOne({
+      _id: new ObjectId(id),
+    });
 
-    await db
-      .collection(COLLECTIONS.APPOINTMENTS)
-      .updateOne(
-        {
-          _id: new ObjectId(review.appointmentId),
+    await db.collection(COLLECTIONS.APPOINTMENTS).updateOne(
+      {
+        _id: new ObjectId(review.appointmentId),
+      },
+      {
+        $set: {
+          hasReview: false,
+          reviewId: null,
+          updatedAt: new Date(),
         },
-        {
-          $set: {
-            hasReview: false,
-          },
-        }
-      );
+      },
+    );
 
     res.json({
       success: true,
@@ -228,9 +244,38 @@ const deleteReview = async (req, res) => {
     });
   }
 };
+const getReviewById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const db = client.db("medicare-connect");
+
+    const review = await db.collection(COLLECTIONS.REVIEWS).findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      review,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   createReview,
+  getReviewByAppointment,
+  getReviewById,
   getDoctorReviews,
   getPatientReviews,
   updateReview,

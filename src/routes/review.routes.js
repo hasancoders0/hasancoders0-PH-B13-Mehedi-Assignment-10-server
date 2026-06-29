@@ -2,34 +2,34 @@ const express = require("express");
 
 const {
   createReview,
+  getReviewByAppointment,
   getDoctorReviews,
   getPatientReviews,
   updateReview,
   deleteReview,
+  getReviewById,
 } = require("../controllers/review.controller");
 
 const router = express.Router();
 
+// Create Review
 router.post("/", createReview);
 
-router.get(
-  "/doctor/:doctorId",
-  getDoctorReviews
-);
+// Get Review By Appointment
+router.get("/appointment/:appointmentId", getReviewByAppointment);
 
-router.get(
-  "/patient/:email",
-  getPatientReviews
-);
+// Doctor Reviews
+router.get("/doctor/:doctorId", getDoctorReviews);
 
-router.put(
-  "/:id",
-  updateReview
-);
+// Patient Reviews
+router.get("/patient/:email", getPatientReviews);
 
-router.delete(
-  "/:id",
-  deleteReview
-);
+// Update Review
+router.put("/:id", updateReview);
+
+// Delete Review
+router.delete("/:id", deleteReview);
+
+router.get("/:id", getReviewById);
 
 module.exports = router;

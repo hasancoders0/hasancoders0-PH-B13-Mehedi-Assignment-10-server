@@ -10,36 +10,57 @@ const getDashboardStats = async (req, res) => {
     const usersCollection = db.collection(COLLECTIONS.USERS);
     const doctorsCollection = db.collection(COLLECTIONS.DOCTORS);
     const appointmentsCollection = db.collection(COLLECTIONS.APPOINTMENTS);
+    const reviewsCollection = db.collection(COLLECTIONS.REVIEWS);
 
     const totalUsers = await usersCollection.countDocuments();
 
     const totalDoctors = await doctorsCollection.countDocuments();
 
-    const totalAppointments = await appointmentsCollection.countDocuments();
-
-    const totalPaidAppointments = await appointmentsCollection.countDocuments({
-      paymentStatus: "paid",
+    // Better patient count
+    const totalPatients = await usersCollection.countDocuments({
+      role: "patient",
+      status: { $ne: "deleted" },
     });
 
-    const totalPendingAppointments =
-      await appointmentsCollection.countDocuments({
-        status: "pending",
-      });
+    const totalAppointments = await appointmentsCollection.countDocuments();
 
-    const totalCancelledAppointments =
-      await appointmentsCollection.countDocuments({
-        status: "cancelled",
-      });
+    const completedAppointments = await appointmentsCollection.countDocuments({
+      status: "completed",
+    });
+
+    const pendingAppointments = await appointmentsCollection.countDocuments({
+      status: "pending",
+    });
+
+    const cancelledAppointments = await appointmentsCollection.countDocuments({
+      status: "cancelled",
+    });
+
+    const paidAppointments = await appointmentsCollection
+      .find({
+        paymentStatus: "paid",
+      })
+      .toArray();
+
+    const totalRevenue = paidAppointments.reduce(
+      (sum, item) => sum + Number(item.consultationFee || 0),
+      0,
+    );
+
+    const totalReviews = await reviewsCollection.countDocuments();
 
     res.status(200).json({
       success: true,
       stats: {
         totalUsers,
         totalDoctors,
+        totalPatients,
         totalAppointments,
-        totalPaidAppointments,
-        totalPendingAppointments,
-        totalCancelledAppointments,
+        completedAppointments,
+        pendingAppointments,
+        cancelledAppointments,
+        totalRevenue,
+        totalReviews,
       },
     });
   } catch (error) {
@@ -71,8 +92,7 @@ const getAllUsers = async (req, res) => {
     });
   }
 };
-
-const makeAdmin = async (req, res) => {
+const suspendUser = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -84,7 +104,8 @@ const makeAdmin = async (req, res) => {
       },
       {
         $set: {
-          role: "admin",
+          status: "suspended",
+          updatedAt: new Date(),
         },
       },
     );
@@ -100,9 +121,60 @@ const makeAdmin = async (req, res) => {
     });
   }
 };
+const activateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const db = client.db("medicare-connect");
+
+    const result = await db.collection(COLLECTIONS.USERS).updateOne(
+      {
+        _id: new ObjectId(id),
+      },
+      {
+        $set: {
+          status: "active",
+          updatedAt: new Date(),
+        },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const db = client.db("medicare-connect");
+
+    const result = await db.collection(COLLECTIONS.USERS).deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    res.status(200).json({
+      success: true,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   getDashboardStats,
   getAllUsers,
-  makeAdmin,
+  suspendUser,
+  activateUser,
+  deleteUser,
 };
